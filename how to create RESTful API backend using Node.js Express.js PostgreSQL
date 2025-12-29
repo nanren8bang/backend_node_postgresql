@@ -158,6 +158,15 @@ curl -v http://192.168.56.103:8080/api/user
 
 Get error : TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type object
 
+Alternative: Reverse Engineering (Automated) 
+To automatically create models from existing tables without manual definition, you can use the sequelize-auto tool: 
+
+npm install  sequelize-auto
+npm install -pg
+# Run the tool to generate models
+/tmp/gemini/node_modules/sequelize-auto/bin/sequelize-auto -h 192.168.56.101 -d dvdrental  -u user_read -x user_read -p 5432 --dialect postgres
+
+Above command will automatically create subfilder in current directory nakded "model" and pust the sequlize mode within it .
 
 
 
