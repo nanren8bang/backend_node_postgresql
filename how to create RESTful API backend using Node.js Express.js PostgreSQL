@@ -57,6 +57,8 @@ Transfer your application files (using git or scp).
 Install dependencies: All dependencies are listed in package.json file 
 npm install all dependencies in sub folder named as "node_modules".
 
+npm install
+
 Now , run “node index.js” to start Gemini backend
 
 [root@localhost gemini]# pwd
@@ -94,6 +96,68 @@ Run above command and it will insert below two lines into package.json :
 "pg-hstore": "^2.3.4",
 
 Then modify .env as below :
+[root@localhost gemini]# pwd
+/tmp/gemini
+[root@localhost gemini]# cat .env
+PORT=8080
+
+HOST='192.168.56.101'
+SQL_PORT=5432
+USER='user_read'
+PASSWORD='user_read'
+DB='dvdretal'
+DIALECT='postgres'
+
+API_SECRET='verySecurityString4$myAPI'
+[root@localhost gemini]#
+
+try to re-start : node index.js
+Got error 
+
+Create table named as "user" as below:
+
+CREATE TABLE "user" (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(30) NOT NULL,
+    email VARCHAR(30) UNIQUE NOT NULL
+);
+
+INSERT INTO "user" (name, email)
+VALUES
+     ('John Doe', 'john.doe@example.com'),
+    ('Alice Smith', 'alice@example.com'),
+    ('Bob Johnson', 'bob@example.com');
+
+dvdrental=# select *  from "user";
+ id |    name     |        email
+----+-------------+----------------------
+  1 | John Doe    | john.doe@example.com
+  2 | Alice Smith | alice@example.com
+  3 | Bob Johnson | bob@example.com
+(3 rows)
+
+Steps to Enable Port 8080
+Add the port permanently:
+Run the following command to open port 8080 for TCP traffic in the public zone [1.4, 1.7].
+bash
+sudo firewall-cmd --permanent --zone=public --add-port=8080/tcp
+Reload the firewall:
+Apply the changes so they take effect immediately [1.4, 1.7].
+bash
+sudo firewall-cmd --reload
+Verify the port is open:
+Check that the port has been added to the active rules [1.11, 1.7].
+bash
+sudo firewall-cmd --list-ports
+
+Then start the APi :  node index.js
+
+Test useing curl :
+
+curl -v http://192.168.56.103:8080/api/user
+
+Get error : TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type object
+
 
 
 
