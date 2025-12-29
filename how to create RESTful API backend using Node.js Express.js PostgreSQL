@@ -71,4 +71,33 @@ SyntaxError: Unexpected token ; at Module._compile (internal/modules/cjs/loader.
 
  ABove error mesan it tried to coenct to MS SQL , but here is not MS SQL , so let tri it in Postgresql :
 
+Google:   how to connect to postgresql using sequelize
+---Getting Started
+https://sequelize.org/docs/v6/getting-started/
+Sequelize is available via npm (or yarn).
+
+npm install --save sequelize
+
+You'll also have to manually install the driver for your database of choice:
+
+# One of the following:
+$ npm install --save pg pg-hstore # Postgres  dialect: 'postgres'
+$ npm install --save mysql2
+$ npm install --save mariadb
+$ npm install --save sqlite3
+$ npm install --save tedious # Microsoft SQL Server dialect: 'mssql'
+$ npm install --save oracledb # Oracle Database
+
+Run above command and it will insert below two lines into package.json :
+
+"pg": "^8.16.3",
+"pg-hstore": "^2.3.4",
+
+Then modify .env as below :
+
+
+
+
+
+
 
