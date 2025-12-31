@@ -136,6 +136,9 @@ dvdrental=# select *  from "user";
   3 | Bob Johnson | bob@example.com
 (3 rows)
 
+[root@localhost model]# psql -h 192.168.56.101 -d dvdrental -U user_read -c "select * from actor"
+
+
 Steps to Enable Port 8080
 Add the port permanently:
 Run the following command to open port 8080 for TCP traffic in the public zone [1.4, 1.7].
@@ -167,6 +170,58 @@ npm install -pg
 /tmp/gemini/node_modules/sequelize-auto/bin/sequelize-auto -h 192.168.56.101 -d dvdrental  -u user_read -x user_read -p 5432 --dialect postgres
 
 Above command will automatically create subfilder in current directory nakded "model" and pust the sequlize mode within it .
+
+create actor.js in model folder as below :
+[root@localhost model]# pwd
+/tmp/gemini/api/model
+[root@localhost model]# cat actor.js
+
+const { DataTypes } = require("sequelize");
+
+//Step 1: Please replace your DB table name in variable "table" as below
+
+const table="actor";
+
+//Steps 2: Please define each filed in your DB table as below
+
+const attributes = {
+
+                     actor_id: {
+                                 //autoIncrement: true,
+                                 type: DataTypes.INTEGER,
+                                 allowNull: false
+                               },
+                     first_name: {
+                                   type: DataTypes.STRING(45),
+                                   allowNull: false
+                                 },
+                     last_name: {
+                                  type: DataTypes.STRING(45),
+                                  allowNull: false
+                                },
+                     last_update: {
+                                   type: DataTypes.DATE,
+                                   allowNull: false
+                                   //defaultValue: Sequelize.Sequelize.fn('now')
+                                  }
+                     };
+
+//Keep below line AS IS
+
+module.exports = {table, attributes}  ;
+
+re-start APi "node index.js" , the test it as below in host Windows :
+C:\Users\welcome>curl -v http://192.168.56.103:8080/api/actor
+C:\Users\welcome>curl -v http://192.168.56.103:8080/api/actor/1
+
+but got error as below:
+
+buffer.js:515
+    throw new ERR_INVALID_ARG_TYPE(
+    ^
+TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type object
+
+
 
 
 
