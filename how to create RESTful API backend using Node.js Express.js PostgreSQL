@@ -164,8 +164,88 @@ Test useing curl :
 
 curl -v http://192.168.56.103:8080/api/user
 
-Get error : TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type object
+Get below error :  
+buffer.js:515
+    throw new ERR_INVALID_ARG_TYPE(
+    ^
+TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type object
 
+It took a whuile to find above error came from teh Sequlize DB conenction paramater from from /tmp/gemini/_config/DB.JS , the part which caused error as below:
+ dialectOptions: {
+      options: { encrypt: false,quoteIdentifiers: false, },
+    },
+So re-designe file .env as below :
+and re-designe db.jhs for Postgresql as below :
+
+[root@localhost gemini]# pwd
+/tmp/gemini
+[root@localhost gemini]# cat .env
+PORT=8080
+
+DB=dvdrental
+DB_USER=user_read
+PASSWORD=user_read
+
+HOST=192.168.56.101
+SQL_PORT=5432
+
+DIALECT=postgres
+
+//DIALECT='PostgresDialect'
+API_SECRET='verySecurityString4$myAPI'
+[root@localhost gemini]#
+
+[root@localhost _config]# pwd
+/tmp/gemini/_config
+[root@localhost _config]# cat db.js
+const { Sequelize } = require("sequelize");
+
+//below is to load .env from App root directory , Here suppose our App root name is "gemini" and .env locate into it .
+//For deplay , please see : https://stackoverflow.com/questions/10265798/determine-project-root-from-a-running-node-js-application
+
+const path = require('path');
+//require('dotenv').config({ path: '../.env'});
+require('dotenv').config({ path: require.main.paths[0].split('gemini')[0].slice(0, -1)+'/gemini/.env'});
+
+//console.log("===Check conenction parameter from configer file ../.env=== ");
+//console.log(require.main.paths[0].split('gemini')[0].slice(0, -1)+'/gemini/.env')
+//console.log(process.env.DB);
+//console.log(process.env.DB_USER);
+//console.log(process.env.PASSWORD);
+
+//console.log(process.env.HOST);
+//console.log(process.env.SQL_PORT);
+//console.log(process.env.DIALECT);
+//console.log('=======END=====');
+
+const sequelize = new Sequelize(
+                                process.env.DB,
+                                process.env.DB_USER,
+                                process.env.PASSWORD,
+                                {
+                                   host: process.env.HOST,
+                                   port: process.env.SQL_PORT,
+                                   dialect: process.env.DIALECT
+
+                                 }
+
+);
+
+module.exports = sequelize;
+[root@localhost _config]#
+
+Now , you can sucesfully conenct to PoytgteSQL usingSequlize .
+
+Test it :
+C:\Users\welcome>curl -v http://192.168.56.103:8080/api/user/1
+ 
+{"id":1,"name":"John Doe","email":"john.doe@example.com"}* Connection #0 to host 192.168.56.103 left intact
+
+C:\Users\welcome>curl -v http://192.168.56.103:8080/api/user
+ 
+{"status":true,"data":[{"id":1,"name":"John Doe","email":"john.doe@example.com"},{"id":2,"name":"Alice Smith","email":"alice@example.com"},{"id":3,"name":"Bob Johnson","email":"bob@example.com"}]}* Connection #0 to host 192.168.56.103 left intact
+
+=================================================================
 Alternative: Reverse Engineering (Automated) 
 To automatically create models from existing tables without manual definition, you can use the sequelize-auto tool: 
 
@@ -174,25 +254,30 @@ npm install -pg
 # Run the tool to generate models
 /tmp/gemini/node_modules/sequelize-auto/bin/sequelize-auto -h 192.168.56.101 -d dvdrental  -u user_read -x user_read -p 5432 --dialect postgres
 
-Above command will automatically create subfilder in current directory nakded "model" and pust the sequlize mode within it .
+Above command will automatically create subfolder in current directory nakded "models" and pust the sequlize mode within it .
+
+=====Below is how to add one new table in this system=====
 
 create actor.js in model folder as below :
+ 
 [root@localhost model]# pwd
 /tmp/gemini/api/model
 [root@localhost model]# cat actor.js
 
 const { DataTypes } = require("sequelize");
 
-//Step 1: Please replace your DB table name in variable "table" as below
+//Step 1: Please replace your DB schema and table name in variable "table" as below
 
 const table="actor";
+const schema="public";
 
 //Steps 2: Please define each filed in your DB table as below
 
 const attributes = {
 
                      actor_id: {
-                                 //autoIncrement: true,
+                                 autoIncrement: true,
+                                 primaryKey:true,
                                  type: DataTypes.INTEGER,
                                  allowNull: false
                                },
@@ -213,22 +298,46 @@ const attributes = {
 
 //Keep below line AS IS
 
-module.exports = {table, attributes}  ;
+module.exports = {schema, table, attributes}  ;
+
+Also modify below file to deal with schema name in modle files:
+
+[root@localhost _mytemp]# pwd
+/tmp/gemini/api/_mytemp
+[root@localhost _mytemp]# cat model.js
+class model {
+  constructor( schema,table, attributes) {
+    this.table=table;
+    this.attributes=attributes;
+    this.sequelize=require("../../_config/db");
+    this.options = {  freezeTableName: true,
+                      timestamps: false, // don't add the timestamp attributes (updatedAt, createdAt)
+                      schema: schema
+                   };
+    //this.options.schema=schema;
+    //console.log(this.options);
+  }
+
+  getModel() {
+              const lowercasedAttributes=Object.keys(this.attributes).reduce((myBO, key) => {
+              myBO[key.toLowerCase()] = this.attributes[key];
+              return myBO;
+              }, {});
+
+              return this.sequelize.define(this.table.toLowerCase(), lowercasedAttributes, this.options);
+              }
+}
+
+module.exports=model;
+
+[root@localhost _mytemp]#
+
 
 re-start APi "node index.js" , the test it as below in host Windows :
 C:\Users\welcome>curl -v http://192.168.56.103:8080/api/actor
 C:\Users\welcome>curl -v http://192.168.56.103:8080/api/actor/1
-
-but got error as below:
-
-buffer.js:515
-    throw new ERR_INVALID_ARG_TYPE(
-    ^
-TypeError [ERR_INVALID_ARG_TYPE]: The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type object
-
-
-
-
+ 
+ {"actor_id":1,"first_name":"Penelope","last_name":"Guiness","last_update":"2013-05-26T18:47:57.620Z"}* Connection #0 to host 192.168.56.103 left intact
 
 
 
